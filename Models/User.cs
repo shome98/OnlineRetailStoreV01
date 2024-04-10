@@ -7,7 +7,7 @@ namespace OnlineRetailStoreV01.Models
     public class User
     {
         [Key]
-        public int UserId { get;set; }
+        public int UserId { get; set; } 
 
         [Required(ErrorMessage ="Full name is required")]
         [StringLength(100)]
