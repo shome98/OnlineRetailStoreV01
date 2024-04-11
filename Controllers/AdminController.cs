@@ -74,7 +74,7 @@ namespace OnlineRetailStoreV01.Controllers
             {
                 return NotFound();
             }
-            await _userService.UpdateUserAsync(user);
+            await _userService.UpdateUserAsync(id,user);
             return RedirectToAction("Index");
         }
 

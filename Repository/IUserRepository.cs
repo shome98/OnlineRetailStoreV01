@@ -8,6 +8,6 @@ namespace OnlineRetailStoreV01.Repository
         Task<IEnumerable<User>> GetAllUsersAsync(); 
         Task AddUserAsync(User user);
         Task DeleteUserAsync(int userId);
-        Task UpdateUserAsync(User user);
+        Task UpdateUserAsync(int userId,User updatedUser);
     }
 }

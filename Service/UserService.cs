@@ -31,9 +31,9 @@ namespace OnlineRetailStoreV01.Service
             return await _userRepository.GetUserByIdAsync(userId);
         }
 
-        public async Task UpdateUserAsync(User user)
+        public async Task UpdateUserAsync(int userId, User updatedUser)
         {
-            await _userRepository.UpdateUserAsync(user);
+            await _userRepository.UpdateUserAsync(userId,updatedUser);
         }
     }
 }
