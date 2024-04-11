@@ -5,7 +5,7 @@
 namespace OnlineRetailStoreV01.Migrations
 {
     /// <inheritdoc />
-    public partial class changed : Migration
+    public partial class againproblem : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -14,7 +14,7 @@ namespace OnlineRetailStoreV01.Migrations
                 name: "Users",
                 columns: table => new
                 {
-                    UserId = table.Column<long>(type: "bigint", nullable: false)
+                    UserId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     FullName = table.Column<string>(name: "Full Name", type: "nvarchar(100)", maxLength: 100, nullable: false),
                     EmailAddress = table.Column<string>(name: "Email Address", type: "nvarchar(100)", maxLength: 100, nullable: false),

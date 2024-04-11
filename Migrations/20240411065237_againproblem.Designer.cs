@@ -11,8 +11,8 @@ using OnlineRetailStoreV01.Data;
 namespace OnlineRetailStoreV01.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20240410110631_changed")]
-    partial class changed
+    [Migration("20240411065237_againproblem")]
+    partial class againproblem
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -26,11 +26,11 @@ namespace OnlineRetailStoreV01.Migrations
 
             modelBuilder.Entity("OnlineRetailStoreV01.Models.User", b =>
                 {
-                    b.Property<long>("UserId")
+                    b.Property<int>("UserId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("UserId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UserId"));
 
                     b.Property<string>("Email")
                         .IsRequired()
