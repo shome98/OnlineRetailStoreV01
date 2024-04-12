@@ -13,12 +13,27 @@ namespace OnlineRetailStoreV01.Service
         }
         public async Task AddUserAsync(User user)
         {
-           await _userRepository.AddUserAsync(user);
+            try
+            {
+                await _userRepository.AddUserAsync(user);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error occurred while adding a new user!!!\n Please try again later. ", ex);
+            }
         }
 
         public async Task DeleteUserAsync(int userId)
         {
-            await _userRepository.DeleteUserAsync(userId);
+            try
+            {
+                await _userRepository.DeleteUserAsync(userId);
+            }
+            catch(Exception ex)
+{
+                throw new Exception("Error occurred while deleting the user!!!\n Please try again later. ", ex);
+            }
+
         }
 
         public async Task<IEnumerable<User>> GetAllUsersAsync()
@@ -33,7 +48,14 @@ namespace OnlineRetailStoreV01.Service
 
         public async Task UpdateUserAsync(int userId, User updatedUser)
         {
-            await _userRepository.UpdateUserAsync(userId,updatedUser);
+            try
+            {
+                await _userRepository.UpdateUserAsync(userId, updatedUser);
+            }
+            catch(Exception ex) 
+            {
+                throw new Exception("Error occurred while updating the user!!!\n Please try again later. ", ex);
+            }
         }
     }
 }
