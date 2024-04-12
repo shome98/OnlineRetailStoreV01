@@ -54,12 +54,6 @@ namespace OnlineRetailStoreV01.Repository
             return await _db.Users.FindAsync(userId);
         }
 
-        //public async Task UpdateUserAsync(User user)
-        //{
-        //    //_db.Entry(user).State=EntityState.Modified;
-        //    _db.Users.Update(user);
-        //    await _db.SaveChangesAsync();
-        //}
         public async Task UpdateUserAsync(int userId, User updatedUser)
         {
             try
