@@ -15,27 +15,13 @@ namespace OnlineRetailStoreV01.Service
         }
         public async Task AddUserAsync(User user)
         {
-            try
-            {
                 user.Password =HashPassword(user.Password);
                 await _userRepository.AddUserAsync(user);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Error occurred while adding a new user!!!\n Please try again later. ", ex);
-            }
         }
 
         public async Task DeleteUserAsync(int userId)
         {
-            try
-            {
-                await _userRepository.DeleteUserAsync(userId);
-            }
-            catch(Exception ex)
-{
-                throw new Exception("Error occurred while deleting the user!!!\n Please try again later. ", ex);
-            }
+            await _userRepository.DeleteUserAsync(userId);
 
         }
 
@@ -51,14 +37,7 @@ namespace OnlineRetailStoreV01.Service
 
         public async Task UpdateUserAsync(int userId, User updatedUser)
         {
-            try
-            {
                 await _userRepository.UpdateUserAsync(userId, updatedUser);
-            }
-            catch(Exception ex) 
-            {
-                throw new Exception("Error occurred while updating the user!!!\n Please try again later. ", ex);
-            }
         }
         
         private string HashPassword(string password)

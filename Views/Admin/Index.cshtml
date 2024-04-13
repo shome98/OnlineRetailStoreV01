@@ -1,4 +1,4 @@
-﻿@model IEnumerable<OnlineRetailStoreV01.Models.User>
+﻿ @model IEnumerable<OnlineRetailStoreV01.Models.User>
 
 @{
     ViewData["Title"] = "Index";
@@ -44,6 +44,7 @@
             </td>
             <td>
                 <a asp-action="Edit" asp-route-id="@item.UserId">Edit</a> |
+                <button asp-action="Edit" asp-route-id="@item.UserId">Edit</button>
                 <a asp-action="Details" asp-route-id="@item.UserId">Details</a> |
                 <a asp-action="Delete" asp-route-id="@item.UserId">Delete</a>
             </td>
@@ -51,3 +52,4 @@
 }
     </tbody>
 </table>
+

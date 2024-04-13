@@ -7,6 +7,7 @@ namespace OnlineRetailStoreV01.Models
     {
         [Key]
         public int OrderItemId { get; set; }
+        public double Price {  get; set; }
 
         //Navigation Property
         [ForeignKey("Order")]
