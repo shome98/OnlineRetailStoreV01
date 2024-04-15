@@ -9,5 +9,7 @@ namespace OnlineRetailStoreV01.Service
         Task AddUserAsync(User user);
         Task UpdateUserAsync(int userId,User updatedUser);
         Task DeleteUserAsync(int userId);
+        bool VerifyPassWord(string password, string hashedPassword);
+        string HashPassword(string password);
     }
 }

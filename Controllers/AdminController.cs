@@ -33,6 +33,7 @@ namespace OnlineRetailStoreV01.Controllers
             {
                 return BadRequest(ModelState);
             }
+            user.Password=_userService.HashPassword(user.Password);
             await _userService.AddUserAsync(user);
             return RedirectToAction("Index");
         }
@@ -47,19 +48,6 @@ namespace OnlineRetailStoreV01.Controllers
             }
             return NotFound();
         }
-        //public IActionResult Edit(int id)
-        //{
-        //    if (id == null || id == 0)
-        //    {
-        //        return NotFound();
-        //    }
-        //    User user=_db.Users.Find(id);   
-        //    if (user == null)
-        //    {
-        //        return NotFound();
-        //    }
-        //    return View(user);
-        //}
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -73,6 +61,10 @@ namespace OnlineRetailStoreV01.Controllers
             if (existingUser == null)
             {
                 return NotFound();
+            }
+            if (_userService.VerifyPassWord(_userService.HashPassword(user.Password), existingUser.Password) != true)
+            {
+                user.Password = _userService.HashPassword(user.Password);
             }
             await _userService.UpdateUserAsync(id,user);
             return RedirectToAction("Index");

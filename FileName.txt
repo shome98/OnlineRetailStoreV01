@@ -1,0 +1,1159 @@
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using OnlineRetailStoreV01.Models;
+using System.Net;
+
+namespace OnlineRetailStoreV01
+{
+    public class FileName
+    {
+    }
+
+}
+using System.Linq;
+using System.Web.Mvc;
+using System.Web.Security;
+using OnlineRetailStoreV01.Models;
+
+namespace OnlineRetailStoreV01.Controllers
+{
+    public class AccountController : Controller
+    {
+        private ApplicationDbContext db = new ApplicationDbContext();
+
+        // GET: /Account/Login
+        public ActionResult Login()
+        {
+            return View();
+        }
+
+        // POST: /Account/Login
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult Login(UserLoginViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var user = db.Users.FirstOrDefault(u => u.Email == model.Email && u.Password == model.Password);
+                if (user != null)
+                {
+                    FormsAuthentication.SetAuthCookie(user.UserId.ToString(), false);
+                    //HttpContext.Session.SetString("userEmail", model.Email);
+
+                    // Redirect based on user type
+                    switch (user.UserType)
+                    {
+                        case UserType.Admin:
+                            return RedirectToAction("AdminView", "Admin");
+                        case UserType.Customer:
+                            return RedirectToAction("CustomerView", "Customer");
+                        case UserType.Courier:
+                            return RedirectToAction("CourierView", "Courier");
+                        case UserType.Vendor:
+                            return RedirectToAction("VendorView", "Vendor");
+                        default:
+                            ModelState.AddModelError("", "Invalid user type.");
+                            return View(model);
+                    }
+                }
+                else
+                {
+                    ModelState.AddModelError("", "Invalid username or password.");
+                }
+            }
+            return View(model);
+        }
+
+        // GET: /Account/Register
+        public ActionResult Register()
+        {
+            return View();
+        }
+
+        // POST: /Account/Register
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult Register(UserRegisterViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                // Create new user
+                var user = new User
+                {
+                    FullName = model.FullName,
+                    Email = model.Email,
+                    Password = model.Password,
+                    UserType = model.UserType
+                };
+
+                // Add user to database
+                db.Users.Add(user);
+                db.SaveChanges();
+
+                // Redirect to login page
+                return RedirectToAction("Login");
+            }
+            return View(model);
+        }
+
+        // GET: /Account/Logout
+        public ActionResult Logout()
+        {
+            FormsAuthentication.SignOut();
+            return RedirectToAction("Login", "Account");
+        }
+    }
+}
+
+using System;
+using System.Linq;
+using System.Web.Mvc;
+using OnlineRetailStoreV01.Models;
+
+namespace OnlineRetailStoreV01.Controllers
+{
+    public class CartController : Controller
+    {
+        private ApplicationDbContext db = new ApplicationDbContext();
+
+        [Authorize(Roles = "Customer")]
+        public ActionResult Index()
+        {
+            // Retrieve the user's cart items
+            var userId = (int)Session["UserId"];
+            var cartItems = db.CartItems.Where(c => c.UserId == userId).ToList();
+            return View(cartItems);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult AddToCart(int productId, int quantity)
+        {
+            // Add the specified quantity of the product to the user's cart
+            var userId = (int)Session["UserId"];
+            var existingCartItem = db.CartItems.FirstOrDefault(c => c.UserId == userId && c.ProductId == productId);
+
+            if (existingCartItem != null)
+            {
+                existingCartItem.Quantity += quantity;
+            }
+            else
+            {
+                db.CartItems.Add(new CartItem { UserId = userId, ProductId = productId, Quantity = quantity });
+            }
+
+            db.SaveChanges();
+
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult RemoveFromCart(int id)
+        {
+            // Remove a product from the user's cart
+            var cartItem = db.CartItems.Find(id);
+            db.CartItems.Remove(cartItem);
+            db.SaveChanges();
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult PlaceOrder()
+        {
+            // Place an order for the user
+            var userId = (int)Session["UserId"];
+            var cartItems = db.CartItems.Where(c => c.UserId == userId).ToList();
+
+            var order = new Order
+            {
+                UserId = userId,
+                OrderDate = DateTime.Now,
+                Items = cartItems
+            };
+
+            db.Orders.Add(order);
+
+            foreach (var item in cartItems)
+            {
+                item.OrderId = order.Id;
+
+                // Decrease the product quantity in the database
+                var product = db.Products.Find(item.ProductId);
+                if (product != null)
+                {
+                    product.Quantity -= item.Quantity;
+                }
+            }
+
+            db.SaveChanges();
+
+            // Clear the user's cart
+            db.CartItems.RemoveRange(cartItems);
+            db.SaveChanges();
+
+            return RedirectToAction("Index", "Order");
+        }
+    }
+}
+
+
+
+using System.Linq;
+using System.Web.Mvc;
+using OnlineRetailStoreV01.Models;
+
+namespace OnlineRetailStoreV01.Controllers
+{
+    public class OrderController : Controller
+    {
+        private ApplicationDbContext db = new ApplicationDbContext();
+
+        [Authorize(Roles = "Customer")]
+        public ActionResult Index()
+        {
+            // Retrieve the user's orders
+            var userId = (int)Session["UserId"];
+            var orders = db.Orders.Where(o => o.UserId == userId).ToList();
+            return View(orders);
+        }
+
+        public ActionResult Details(int id)
+        {
+            // View details of a specific order
+            var order = db.Orders.Find(id);
+            return View(order);
+        }
+    }
+}
+
+
+using System.Linq;
+using System.Web.Mvc;
+using OnlineRetailStoreV01.Models;
+
+namespace OnlineRetailStoreV01.Controllers
+{
+    public class CourierController : Controller
+    {
+        private ApplicationDbContext db = new ApplicationDbContext();
+
+        [Authorize(Roles = "Courier")]
+        public ActionResult Index()
+        {
+            // Retrieve orders assigned to the courier
+            var courierId = (int)Session["UserId"];
+            var orders = db.Orders.Where(o => o.CourierId == courierId).ToList();
+            return View(orders);
+        }
+
+        [Authorize(Roles = "Courier")]
+        public ActionResult UpdateStatus(int id, OrderStatus status)
+        {
+            // Update the status of the order
+            var order = db.Orders.Find(id);
+            if (order != null)
+            {
+                order.Status = status;
+                db.SaveChanges();
+            }
+            return RedirectToAction("Index");
+        }
+    }
+}
+
+
+
+using System;
+using System.Collections.Generic;
+
+namespace OnlineRetailStoreV01.Models
+{
+    public enum OrderStatus
+    {
+        Pending,
+        InProgress,
+        Delivered,
+        Cancelled
+    }
+
+    public class Order
+    {
+        public int Id { get; set; }
+        public int UserId { get; set; }
+        public DateTime OrderDate { get; set; }
+        public int CourierId { get; set; }
+        public OrderStatus Status { get; set; }
+        public virtual ICollection<CartItem> Items { get; set; }
+    }
+}
+
+
+using System.Data.Entity;
+using System.Linq;
+using System.Net;
+using System.Web.Mvc;
+using OnlineRetailStoreV01.Models;
+
+namespace OnlineRetailStoreV01.Controllers
+{
+    public class ProductController : Controller
+    {
+        private ApplicationDbContext db = new ApplicationDbContext();
+
+        [Authorize(Roles = "Vendor")]
+        public ActionResult Index()
+        {
+            var vendorId = (int)Session["UserId"];
+            var products = db.Products.Where(p => p.VendorId == vendorId).ToList();
+            return View(products);
+        }
+
+        [Authorize(Roles = "Vendor")]
+        public ActionResult Create()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult Create(Product product)
+        {
+            if (ModelState.IsValid)
+            {
+                var vendorId = (int)Session["UserId"];
+                product.VendorId = vendorId;
+                db.Products.Add(product);
+                db.SaveChanges();
+                return RedirectToAction("Index");
+            }
+            return View(product);
+        }
+
+        [Authorize(Roles = "Vendor")]
+        public ActionResult Edit(int? id)
+        {
+            if (id == null)
+            {
+                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+            }
+            var product = db.Products.Find(id);
+            if (product == null)
+            {
+                return HttpNotFound();
+            }
+            return View(product);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult Edit(Product product)
+        {
+            if (ModelState.IsValid)
+            {
+                db.Entry(product).State = EntityState.Modified;
+                db.SaveChanges();
+                return RedirectToAction("Index");
+            }
+            return View(product);
+        }
+
+        [Authorize(Roles = "Vendor")]
+        public ActionResult Delete(int? id)
+        {
+            if (id == null)
+            {
+                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+            }
+            var product = db.Products.Find(id);
+            if (product == null)
+            {
+                return HttpNotFound();
+            }
+            return View(product);
+        }
+
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public ActionResult DeleteConfirmed(int id)
+        {
+            var product = db.Products.Find(id);
+            db.Products.Remove(product);
+            db.SaveChanges();
+            return RedirectToAction("Index");
+        }
+    }
+}
+
+
+
+namespace OnlineRetailStoreV01.Models
+{
+    public class Product
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public decimal Price { get; set; }
+        public int Quantity { get; set; }
+        public int VendorId { get; set; }
+        public virtual Vendor Vendor { get; set; }
+    }
+}
+
+
+
+[HttpPost]
+[ValidateAntiForgeryToken]
+public ActionResult PlaceOrder()
+{
+    var userId = (int)Session["UserId"];
+    var cartItems = db.CartItems.Where(c => c.UserId == userId).ToList();
+
+    var order = new Order
+    {
+        UserId = userId,
+        OrderDate = DateTime.Now,
+        Items = cartItems
+    };
+
+    db.Orders.Add(order);
+
+    foreach (var item in cartItems)
+    {
+        item.OrderId = order.Id;
+
+        // Decrease the product quantity in the database
+        var product = db.Products.Find(item.ProductId);
+        if (product != null)
+        {
+            product.Quantity -= item.Quantity;
+        }
+    }
+
+    db.SaveChanges();
+
+    // Clear the user's cart
+    db.CartItems.RemoveRange(cartItems);
+    db.SaveChanges();
+
+    return RedirectToAction("Index", "Order");
+}
+
+
+
+using System.Linq;
+using System.Web.Mvc;
+using OnlineRetailStoreV01.Models;
+
+namespace OnlineRetailStoreV01.Controllers
+{
+    public class AdminController : Controller
+    {
+        private ApplicationDbContext db = new ApplicationDbContext();
+
+        [Authorize(Roles = "Admin")]
+        public ActionResult Index()
+        {
+            return View();
+        }
+
+        [Authorize(Roles = "Admin")]
+        public ActionResult ManageVendors()
+        {
+            var vendors = db.Vendors.ToList();
+            return View(vendors);
+        }
+
+        [Authorize(Roles = "Admin")]
+        public ActionResult ManageCouriers()
+        {
+            var couriers = db.Couriers.ToList();
+            return View(couriers);
+        }
+
+        [Authorize(Roles = "Admin")]
+        public ActionResult ManageProducts()
+        {
+            var products = db.Products.ToList();
+            return View(products);
+        }
+
+        [Authorize(Roles = "Admin")]
+        public ActionResult ApproveVendor(int id)
+        {
+            var vendor = db.Vendors.Find(id);
+            if (vendor != null)
+            {
+                vendor.IsApproved = true;
+                db.SaveChanges();
+            }
+            return RedirectToAction("ManageVendors");
+        }
+
+        [Authorize(Roles = "Admin")]
+        public ActionResult ApproveCourier(int id)
+        {
+            var courier = db.Couriers.Find(id);
+            if (courier != null)
+            {
+                courier.IsApproved = true;
+                db.SaveChanges();
+            }
+            return RedirectToAction("ManageCouriers");
+        }
+    }
+}
+
+[HttpPost]
+[ValidateAntiForgeryToken]
+public ActionResult PlaceOrder()
+{
+    var userId = (int)Session["UserId"];
+    var cartItems = db.CartItems.Where(c => c.UserId == userId).ToList();
+
+    var order = new Order
+    {
+        UserId = userId,
+        OrderDate = DateTime.Now,
+        Items = cartItems
+    };
+
+    db.Orders.Add(order);
+
+    foreach (var item in cartItems)
+    {
+        item.OrderId = order.Id;
+
+        // Decrease the product quantity in the database
+        var product = db.Products.Find(item.ProductId);
+        if (product != null)
+        {
+            product.Quantity -= item.Quantity;
+        }
+    }
+
+    db.SaveChanges();
+
+    // Clear the user's cart
+    db.CartItems.RemoveRange(cartItems);
+    db.SaveChanges();
+
+    return RedirectToAction("Index", "Order");
+}
+
+////////////////////////////////////////////////////////
+/*
+//login 
+using Microsoft.AspNetCore.Mvc;
+using OnlineRetailStoreV01.Models;
+using System.Linq;
+
+namespace OnlineRetailStoreV01.Controllers
+{
+    public class AccountController : Controller
+    {
+        private readonly ApplicationDbContext _context;
+
+        public AccountController(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        // GET: /Account/Login
+        public IActionResult Login()
+        {
+            return View();
+        }
+
+        // POST: /Account/Login
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Login(UserLoginViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var user = _context.Users.FirstOrDefault(u => u.Email == model.Email && u.Password == model.Password);
+                if (user != null)
+                {
+                    // Redirect logic based on user type
+                    // Implement the redirection logic based on the user type
+                }
+                else
+                {
+                    ModelState.AddModelError("", "Invalid username or password.");
+                    return View(model);
+                }
+            }
+            return View(model);
+        }
+
+        // GET: /Account/Register
+        public IActionResult Register()
+        {
+            return View();
+        }
+
+        // POST: /Account/Register
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Register(UserRegisterViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var user = new User
+                {
+                    FullName = model.FullName,
+                    Email = model.Email,
+                    Password = model.Password,
+                    UserType = model.UserType
+                };
+
+                _context.Users.Add(user);
+                _context.SaveChanges();
+
+                return RedirectToAction("Login");
+            }
+            return View(model);
+        }
+
+        // GET: /Account/Logout
+        public IActionResult Logout()
+        {
+            // Implement logout logic as required
+            return RedirectToAction("Login");
+        }
+    }
+}
+
+
+//cart controller
+using Microsoft.AspNetCore.Mvc;
+using OnlineRetailStoreV01.Models;
+using System;
+using System.Linq;
+
+namespace OnlineRetailStoreV01.Controllers
+{
+    public class CartController : Controller
+    {
+        private readonly ApplicationDbContext _context;
+
+        public CartController(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        [Authorize(Roles = "Customer")]
+        public IActionResult Index()
+        {
+            var userId = GetCurrentUserId();
+            var cartItems = _context.CartItems.Where(c => c.UserId == userId).ToList();
+            return View(cartItems);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult AddToCart(int productId, int quantity)
+        {
+            var userId = GetCurrentUserId();
+            var existingCartItem = _context.CartItems.FirstOrDefault(c => c.UserId == userId && c.ProductId == productId);
+
+            if (existingCartItem != null)
+            {
+                existingCartItem.Quantity += quantity;
+            }
+            else
+            {
+                _context.CartItems.Add(new CartItem { UserId = userId, ProductId = productId, Quantity = quantity });
+            }
+
+            _context.SaveChanges();
+
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult RemoveFromCart(int id)
+        {
+            var cartItem = _context.CartItems.Find(id);
+            _context.CartItems.Remove(cartItem);
+            _context.SaveChanges();
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult PlaceOrder()
+        {
+            var userId = GetCurrentUserId();
+            var cartItems = _context.CartItems.Where(c => c.UserId == userId).ToList();
+
+            var order = new Order
+            {
+                UserId = userId,
+                OrderDate = DateTime.Now,
+                Items = cartItems
+            };
+
+            _context.Orders.Add(order);
+
+            foreach (var item in cartItems)
+            {
+                item.OrderId = order.Id;
+
+                var product = _context.Products.Find(item.ProductId);
+                if (product != null)
+                {
+                    product.Quantity -= item.Quantity;
+                }
+            }
+
+            _context.SaveChanges();
+
+            _context.CartItems.RemoveRange(cartItems);
+            _context.SaveChanges();
+
+            return RedirectToAction("Index", "Order");
+        }
+
+        private int GetCurrentUserId()
+        {
+            // Implement logic to get the current user's ID
+        }
+    }
+}
+
+//order controller
+using Microsoft.AspNetCore.Mvc;
+using OnlineRetailStoreV01.Models;
+using System;
+using System.Linq;
+
+namespace OnlineRetailStoreV01.Controllers
+{
+    public class OrderController : Controller
+    {
+        private readonly ApplicationDbContext _context;
+
+        public OrderController(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        [Authorize(Roles = "Customer")]
+        public IActionResult Index()
+        {
+            var userId = GetCurrentUserId();
+            var orders = _context.Orders.Where(o => o.UserId == userId).ToList();
+            return View(orders);
+        }
+
+        public IActionResult Details(int id)
+        {
+            var order = _context.Orders.Find(id);
+            return View(order);
+        }
+
+        private int GetCurrentUserId()
+        {
+            // Implement logic to get the current user's ID
+        }
+    }
+}
+
+//courier controller
+using Microsoft.AspNetCore.Mvc;
+using OnlineRetailStoreV01.Models;
+using System;
+using System.Linq;
+
+namespace OnlineRetailStoreV01.Controllers
+{
+    public class CourierController : Controller
+    {
+        private readonly ApplicationDbContext _context;
+
+        public CourierController(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        [Authorize(Roles = "Courier")]
+        public IActionResult Index()
+        {
+            var courierId = GetCurrentCourierId();
+            var orders = _context.Orders.Where(o => o.CourierId == courierId).ToList();
+            return View(orders);
+        }
+
+        [Authorize(Roles = "Courier")]
+        public IActionResult UpdateStatus(int id, OrderStatus status)
+        {
+            var order = _context.Orders.Find(id);
+            if (order != null)
+            {
+                order.Status = status;
+                _context.SaveChanges();
+            }
+            return RedirectToAction("Index");
+        }
+
+        private int GetCurrentCourierId()
+        {
+            // Implement logic to get the current courier's ID
+        }
+    }
+}
+
+//product controller
+using Microsoft.AspNetCore.Mvc;
+using OnlineRetailStoreV01.Models;
+using System;
+using System.Linq;
+
+namespace OnlineRetailStoreV01.Controllers
+{
+    public class ProductController : Controller
+    {
+        private readonly ApplicationDbContext _context;
+
+        public ProductController(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        [Authorize(Roles = "Vendor")]
+        public IActionResult Index()
+        {
+            var vendorId = GetCurrentVendorId();
+            var products = _context.Products.Where(p => p.VendorId == vendorId).ToList();
+            return View(products);
+        }
+
+        [Authorize(Roles = "Vendor")]
+        public IActionResult Create()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Create(Product product)
+        {
+            if (ModelState.IsValid)
+            {
+                var vendorId = GetCurrentVendorId();
+                product.VendorId = vendorId;
+                _context.Products.Add(product);
+                _context.SaveChanges();
+                return RedirectToAction("Index");
+            }
+            return View(product);
+        }
+
+        [Authorize(Roles = "Vendor")]
+        public IActionResult Edit(int? id)
+        {
+            if (id == null)
+            {
+                return BadRequest();
+            }
+            var product = _context.Products.Find(id);
+            if (product == null)
+            {
+                return NotFound();
+            }
+            return View(product);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Edit(Product product)
+        {
+            if (ModelState.IsValid)
+            {
+                _context.Products.Update(product);
+                _context.SaveChanges();
+                return RedirectToAction("Index");
+            }
+            return View(product);
+        }
+
+        [Authorize(Roles = "Vendor")]
+        public IActionResult Delete(int? id)
+        {
+            if (id == null)
+            {
+                return BadRequest();
+            }
+            var product = _context.Products.Find(id);
+            if (product == null)
+            {
+                return NotFound();
+            }
+            return View(product);
+        }
+
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public IActionResult DeleteConfirmed(int id)
+        {
+            var product = _context.Products.Find(id);
+            _context.Products.Remove(product);
+            _context.SaveChanges();
+            return RedirectToAction("Index");
+        }
+
+        private int GetCurrentVendorId()
+{
+    var vendorIdClaim = User.Claims.FirstOrDefault(c => c.Type == "VendorId");
+    if (vendorIdClaim != null && int.TryParse(vendorIdClaim.Value, out int vendorId))
+    {
+        return vendorId;
+    }
+    // If vendor ID not found or invalid, handle accordingly (e.g., redirect to an error page)
+    return -1; // Default value or error handling
+}
+
+    }
+}
+
+
+//
+private int GetCurrentUserId()
+{
+    var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
+    if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
+    {
+        return userId;
+    }
+    // If user ID not found or invalid, handle accordingly (e.g., redirect to an error page)
+    return -1; // Default value or error handling
+}
+
+//private int GetCurrentCourierId()
+{
+    var courierIdClaim = User.Claims.FirstOrDefault(c => c.Type == "CourierId");
+    if (courierIdClaim != null && int.TryParse(courierIdClaim.Value, out int courierId))
+    {
+        return courierId;
+    }
+    // If courier ID not found or invalid, handle accordingly (e.g., redirect to an error page)
+    return -1; // Default value or error handling
+}
+
+
+
+//Sure, I'll provide an example of registration along with authentication. Here's the complete code with registration and authentication for four types of users (admin, vendor, courier, and customer):
+
+```csharp
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
+using System;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using System.Collections.Generic;
+
+public class AuthController : ControllerBase
+{
+    private readonly IUserService _userService; // Assuming you have a service to handle user-related operations
+
+    public AuthController(IUserService userService)
+    {
+        _userService = userService;
+    }
+
+    [AllowAnonymous]
+    [HttpPost("login")]
+    public IActionResult Login(string email, string password)
+    {
+        var user = _userService.Authenticate(email, password); // Implement this method to authenticate the user
+
+        if (user == null)
+            return Unauthorized();
+
+        var token = GenerateJwtToken(user.UserId, user.UserType.ToString());
+        return Ok(new { token });
+    }
+
+    [AllowAnonymous]
+    [HttpPost("register")]
+    public IActionResult Register(UserRegisterViewModel model)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        // Map UserRegisterViewModel to User entity
+        var user = new User
+        {
+            FullName = model.FullName,
+            Email = model.Email,
+            Password = model.Password,
+            UserType = model.UserType
+        };
+
+        // Add user to database
+        try
+        {
+            _userService.AddUser(user);
+            return Ok(new { message = "User registered successfully" });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = "Failed to register user", error = ex.Message });
+        }
+    }
+
+    private string GenerateJwtToken(int userId, string role)
+    {
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var key = GetTokenKeyForRole(role);
+        var tokenDescriptor = new SecurityTokenDescriptor
+        {
+            Subject = new ClaimsIdentity(new Claim[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+                new Claim(ClaimTypes.Role, role)
+            }),
+            Expires = DateTime.UtcNow.AddDays(1),
+            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+        };
+        var token = tokenHandler.CreateToken(tokenDescriptor);
+        return tokenHandler.WriteToken(token);
+    }
+
+    private byte[] GetTokenKeyForRole(string role)
+    {
+        switch (role)
+        {
+            case "Admin":
+                return Encoding.ASCII.GetBytes("admin-secret-key");
+            case "Vendor":
+                return Encoding.ASCII.GetBytes("vendor-secret-key");
+            case "Courier":
+                return Encoding.ASCII.GetBytes("courier-secret-key");
+            case "Customer":
+                return Encoding.ASCII.GetBytes("customer-secret-key");
+            default:
+                throw new ArgumentException("Invalid role");
+        }
+    }
+}
+
+public class UserRegisterViewModel
+{
+    public string FullName { get; set; }
+    public string Email { get; set; }
+    public string Password { get; set; }
+    public UserType UserType { get; set; }
+}
+
+public class User
+{
+    public int UserId { get; set; }
+    public string FullName { get; set; }
+    public string Email { get; set; }
+    public string Password { get; set; }
+    public UserType UserType { get; set; }
+}
+
+public enum UserType
+{
+    Admin,
+    Vendor,
+    Courier,
+    Customer
+}
+
+public interface IUserService
+{
+    User Authenticate(string email, string password);
+    void AddUser(User user);
+}
+```
+
+This code provides endpoints for both user registration (`Register`) and authentication (`Login`). Adjust the implementation of the `IUserService` interface and its concrete implementation (`UserService`) to interact with your data store for user authentication and registration.
+
+Ensure that you properly hash passwords before storing them in the database and handle errors appropriately. Also, make sure to secure your secret keys and never expose them publicly.
+
+
+//Got it! Since you're not using ASP.NET Core Identity and only relying on JWT for authentication, you'll need to implement a custom solution for user authentication, role management, and JWT token generation.
+
+Here's how you can modify the code to support JWT-based authentication with custom role management:
+
+1. **Program.cs:**
+   ```csharp
+   using Microsoft.AspNetCore.Authentication.JwtBearer;
+   using Microsoft.IdentityModel.Tokens;
+   using YourNamespace.Services;
+
+   var builder = WebApplication.CreateBuilder(args);
+
+   builder.Services.AddScoped<IUserService, UserService>();
+
+   builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+       .AddJwtBearer(options =>
+       {
+           options.TokenValidationParameters = new TokenValidationParameters
+           {
+               ValidateIssuer = false,
+               ValidateAudience = false,
+               ValidateLifetime = true,
+               ValidateIssuerSigningKey = true,
+               IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"]))
+           };
+       });
+
+   builder.Services.AddAuthorization();
+
+   builder.Services.AddControllersWithViews();
+
+   var app = builder.Build();
+
+   // Configure the HTTP request pipeline.
+   if (!app.Environment.IsDevelopment())
+   {
+       app.UseExceptionHandler("/Home/Error");
+       app.UseHsts();
+   }
+
+   app.UseHttpsRedirection();
+   app.UseStaticFiles();
+
+   app.UseAuthentication();
+   app.UseAuthorization();
+
+   app.MapControllerRoute(
+       name: "default",
+       pattern: "{controller=Home}/{action=Index}/{id?}");
+
+   app.Run();
+   ```
+
+2. **appsettings.json:**
+   Ensure you have the JWT key configured in the `appsettings.json` file:
+   ```json
+   {
+     "Jwt": {
+       "Key": "your_secret_key_here"
+     }
+   }
+   ```
+
+3. **UserService.cs:**
+   Implement the user service to handle user authentication, registration, and role management.
+
+4. **UserController.cs:**
+   Implement the user controller to handle user registration and authentication endpoints.
+
+5. **JwtService.cs:**
+   Implement a service to generate JWT tokens with roles embedded in them.
+
+With these modifications, your ASP.NET Core 6 application will support JWT-based authentication with custom role management. Make sure to implement the user service, user controller, JWT service, and database models according to your application's requirements.
+
+
+*/

@@ -23,6 +23,7 @@ namespace OnlineRetailStoreV01.Data
 
             modelBuilder.Entity<OrderItem>()
                 .HasKey(oi => new {oi.OrderId, oi.ProductId});
+
             modelBuilder.Entity<OrderItem>()
                 .HasOne(o => o.Order)
                 .WithMany(oi => oi.OrderItems)

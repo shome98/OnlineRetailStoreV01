@@ -15,15 +15,8 @@ namespace OnlineRetailStoreV01.Repository
 
         public async Task AddUserAsync(User user)
         {
-            try
-            {
                 await _db.Users.AddAsync(user);
                 await _db.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Error occurred while adding a new user!!!\n Please try again later. ", ex);
-            }
 
         }
 
@@ -56,8 +49,7 @@ namespace OnlineRetailStoreV01.Repository
 
         public async Task UpdateUserAsync(int userId, User updatedUser)
         {
-            try
-            {
+
                 var existingUser = await _db.Users.FindAsync(userId);
                 if (existingUser != null)
                 {
@@ -69,11 +61,6 @@ namespace OnlineRetailStoreV01.Repository
 
                     await _db.SaveChangesAsync();
                 }
-            }
-            catch(Exception ex) 
-            {
-                throw new Exception("Error occurred while updating the user!!!\n Please try again later. ", ex);
-            }
         }
 
     }

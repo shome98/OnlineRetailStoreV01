@@ -15,32 +15,73 @@ namespace OnlineRetailStoreV01.Service
         }
         public async Task AddUserAsync(User user)
         {
-                user.Password =HashPassword(user.Password);
-                await _userRepository.AddUserAsync(user);
+            try
+            {
+                if (user != null)
+                {
+                    
+                    await _userRepository.AddUserAsync(user);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error occurred while adding a new user!!!\n Please try again later. ", ex);
+            }
         }
 
         public async Task DeleteUserAsync(int userId)
         {
-            await _userRepository.DeleteUserAsync(userId);
+            try
+            {
+                await _userRepository.DeleteUserAsync(userId);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error occurred while deleting user!!!\n Please try again later. ", ex);
+            }
+
 
         }
 
         public async Task<IEnumerable<User>> GetAllUsersAsync()
         {
-            return await _userRepository.GetAllUsersAsync();
+            try
+            {
+                return await _userRepository.GetAllUsersAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error occurred while fetching all the users!!!\n Please try again later. ", ex);
+            }
+
         }
 
         public async Task<User> GetUserByIdAsync(int userId)
         {
-            return await _userRepository.GetUserByIdAsync(userId);
+            try 
+            {
+                return await _userRepository.GetUserByIdAsync(userId);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error occurred while fetching the user!!!\n Please try again later. ", ex);
+            }
+
         }
 
         public async Task UpdateUserAsync(int userId, User updatedUser)
         {
+            try
+            {
                 await _userRepository.UpdateUserAsync(userId, updatedUser);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error occurred while updating the user!!!\n Please try again later. ", ex);
+            }
         }
         
-        private string HashPassword(string password)
+        public  string HashPassword(string password)
         {
             using(var sha256=SHA256.Create())
             {
@@ -49,7 +90,7 @@ namespace OnlineRetailStoreV01.Service
             }
         }
 
-        private bool VerifyPassWord(string password,string hashedPassword)
+        public bool VerifyPassWord(string password,string hashedPassword)
         {
             string hashedInput=HashPassword(password);
             return string.Equals(hashedInput, hashedPassword);
