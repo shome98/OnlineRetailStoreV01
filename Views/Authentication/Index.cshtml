@@ -1,0 +1,100 @@
+﻿@* @model OnlineRetailStoreV01.Models.User
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<h4>User</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Index">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="FullName" class="control-label"></label>
+                <input asp-for="FullName" class="form-control" />
+                <span asp-validation-for="FullName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Email" class="control-label"></label>
+                <input asp-for="Email" class="form-control" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Password" class="control-label"></label>
+                <input asp-for="Password" class="form-control" />
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="UserType" class="control-label"></label>
+                <select asp-for="UserType" class="form-control"></select>
+                <span asp-validation-for="UserType" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" asp-action="Register" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+} *@
+@model OnlineRetailStoreV01.Models.User
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<div class="container">
+    <div class="row justify-content-center align-items-center">
+        <div class="col-md-6">
+            <h1 class="text-center mb-4">User Registration</h1>
+            <form asp-action="Index">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <div class="form-group mb-3" style="user-select: auto;">
+                    <label asp-for="FullName" class="control-label" style="user-select: auto;"></label>
+                    <input asp-for="FullName" class="form-control" style="user-select: auto;" />
+                    <span asp-validation-for="FullName" class="text-danger" style="user-select: auto;"></span>
+                </div>
+                <div class="form-group mb-3" style="user-select: auto;">
+                    <label asp-for="Email" class="control-label" style="user-select: auto;"></label>
+                    <input asp-for="Email" class="form-control" style="user-select: auto;" />
+                    <small id="emailHelp" class="form-text text-muted" style="user-select: auto;">We'll never share your email with anyone else.</small>
+                    <span asp-validation-for="Email" class="text-danger" style="user-select: auto;"></span>
+                </div>
+                <div class="form-group mb-3" style="user-select: auto;">
+                    <label asp-for="Password" class="control-label" style="user-select: auto;"></label>
+                    <input asp-for="Password" class="form-control" style="user-select: auto;" />
+                    <span asp-validation-for="Password" class="text-danger" style="user-select: auto;"></span>
+                </div>
+                <div class="form-group mb-3" style="user-select: auto;">
+                    <label asp-for="UserType" class="control-label" style="user-select: auto;"></label>
+                    <select asp-for="UserType" class="form-control" style="user-select: auto;">
+                        <option>Select an option</option>
+                        <option>Admin</option>
+                        <option>Courier</option>
+                        <option>Customer</option>
+                        <option>Vendor</option>
+                    </select>
+                    <span asp-validation-for="UserType" class="text-danger" style="user-select: auto;"></span>
+                </div>
+                <div class="form-group mb-3 text-center" style="user-select: auto;">
+                    <button type="submit" class="btn btn-primary me-2" style="user-select: auto;" asp-action="Register">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -8,12 +8,10 @@ namespace OnlineRetailStoreV01.Controllers
     public class AdminController : Controller
     {
         private readonly IUserService _userService;
-        private readonly AppDbContext _db;
 
         public AdminController(IUserService userService,AppDbContext db)
         {
             _userService = userService;
-            _db = db;
         }
         public async Task<IActionResult> Index()
         {
@@ -62,7 +60,7 @@ namespace OnlineRetailStoreV01.Controllers
             {
                 return NotFound();
             }
-            if (_userService.VerifyPassWord(_userService.HashPassword(user.Password), existingUser.Password) != true)
+            if (!_userService.VerifyPassWord(_userService.HashPassword(user.Password), existingUser.Password))
             {
                 user.Password = _userService.HashPassword(user.Password);
             }

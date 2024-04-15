@@ -1,4 +1,5 @@
-﻿using OnlineRetailStoreV01.Models;
+﻿using OnlineRetailStoreV01.Controllers;
+using OnlineRetailStoreV01.Models;
 
 namespace OnlineRetailStoreV01.Service
 {
@@ -11,5 +12,9 @@ namespace OnlineRetailStoreV01.Service
         Task DeleteUserAsync(int userId);
         bool VerifyPassWord(string password, string hashedPassword);
         string HashPassword(string password);
+        Task<bool> Authenticate(string email, string password);
+        Task<User> GetUserByEmailAsync(string email);
+        Task<bool> RegisterAsync(User model);
+
     }
 }

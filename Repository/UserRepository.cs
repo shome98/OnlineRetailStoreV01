@@ -62,6 +62,11 @@ namespace OnlineRetailStoreV01.Repository
                     await _db.SaveChangesAsync();
                 }
         }
+        public async Task<User> GetUserByEmailAsync(string email)
+        {
+            return await _db.Users.FirstOrDefaultAsync(user=>user.Email==email);
+        }
+
 
     }
 }
