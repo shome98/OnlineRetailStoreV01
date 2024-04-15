@@ -1157,3 +1157,138 @@ With these modifications, your ASP.NET Core 6 application will support JWT-based
 
 
 */
+/*
+
+Sure, I'll provide an example of registration along with authentication. Here's the complete code with registration and authentication for four types of users (admin, vendor, courier, and customer):
+
+```csharp
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
+using System;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using System.Collections.Generic;
+
+public class AuthController : ControllerBase
+{
+    private readonly IUserService _userService; // Assuming you have a service to handle user-related operations
+
+    public AuthController(IUserService userService)
+    {
+        _userService = userService;
+    }
+
+    [AllowAnonymous]
+    [HttpPost("login")]
+    public IActionResult Login(string email, string password)
+    {
+        var user = _userService.Authenticate(email, password); // Implement this method to authenticate the user
+
+        if (user == null)
+            return Unauthorized();
+
+        var token = GenerateJwtToken(user.UserId, user.UserType.ToString());
+        return Ok(new { token });
+    }
+
+    [AllowAnonymous]
+    [HttpPost("register")]
+    public IActionResult Register(UserRegisterViewModel model)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        // Map UserRegisterViewModel to User entity
+        var user = new User
+        {
+            FullName = model.FullName,
+            Email = model.Email,
+            Password = model.Password,
+            UserType = model.UserType
+        };
+
+        // Add user to database
+        try
+        {
+            _userService.AddUser(user);
+            return Ok(new { message = "User registered successfully" });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = "Failed to register user", error = ex.Message });
+        }
+    }
+
+    private string GenerateJwtToken(int userId, string role)
+    {
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var key = GetTokenKeyForRole(role);
+        var tokenDescriptor = new SecurityTokenDescriptor
+        {
+            Subject = new ClaimsIdentity(new Claim[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+                new Claim(ClaimTypes.Role, role)
+            }),
+            Expires = DateTime.UtcNow.AddDays(1),
+            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+        };
+        var token = tokenHandler.CreateToken(tokenDescriptor);
+        return tokenHandler.WriteToken(token);
+    }
+
+    private byte[] GetTokenKeyForRole(string role)
+    {
+        switch (role)
+        {
+            case "Admin":
+                return Encoding.ASCII.GetBytes("admin-secret-key");
+            case "Vendor":
+                return Encoding.ASCII.GetBytes("vendor-secret-key");
+            case "Courier":
+                return Encoding.ASCII.GetBytes("courier-secret-key");
+            case "Customer":
+                return Encoding.ASCII.GetBytes("customer-secret-key");
+            default:
+                throw new ArgumentException("Invalid role");
+        }
+    }
+}
+
+public class UserRegisterViewModel
+{
+    public string FullName { get; set; }
+    public string Email { get; set; }
+    public string Password { get; set; }
+    public UserType UserType { get; set; }
+}
+
+public class User
+{
+    public int UserId { get; set; }
+    public string FullName { get; set; }
+    public string Email { get; set; }
+    public string Password { get; set; }
+    public UserType UserType { get; set; }
+}
+
+public enum UserType
+{
+    Admin,
+    Vendor,
+    Courier,
+    Customer
+}
+
+public interface IUserService
+{
+    User Authenticate(string email, string password);
+    void AddUser(User user);
+}
+```
+
+This code provides endpoints for both user registration (`Register`) and authentication (`Login`). Adjust the implementation of the `IUserService` interface and its concrete implementation (`UserService`) to interact with your data store for user authentication and registration.
+
+Ensure that you properly hash passwords before storing them in the database and handle errors appropriately. Also, make sure to secure your secret keys and never expose them publicly.
+*/
