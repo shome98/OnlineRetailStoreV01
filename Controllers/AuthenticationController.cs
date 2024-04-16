@@ -21,10 +21,7 @@ namespace OnlineRetailStoreV01.Controllers
         {
             return View();
         }
-        public IActionResult LoginIndex()
-        {
-            return View();
-        }
+        
 
         [AllowAnonymous]
         [HttpPost("register")]
@@ -41,15 +38,18 @@ namespace OnlineRetailStoreV01.Controllers
 
             //return Ok(new { message = "User registered successfully" });
             return Redirect("Admin/Index");
-            return RedirectToAction("Index", "Admin");
         }
 
+        public IActionResult LoginIndex()
+        {
+            return View();
+        }
 
         [AllowAnonymous]
         [HttpPost("login")]
         public async Task<IActionResult> LoginAsync(string email,string passwword)
         {
-            var isAuthenticated = _userService.Authenticate(email, passwword);
+            var isAuthenticated = await _userService.Authenticate(email, passwword);
 
             if (!Convert.ToBoolean(isAuthenticated))
                 return Unauthorized();
