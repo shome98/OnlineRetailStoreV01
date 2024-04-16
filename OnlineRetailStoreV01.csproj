@@ -7,6 +7,13 @@
     <UserSecretsId>056b1a8a-e324-4a5a-a929-42acc8f23586</UserSecretsId>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="Views\RegisterLogInLogOut\**" />
+    <Content Remove="Views\RegisterLogInLogOut\**" />
+    <EmbeddedResource Remove="Views\RegisterLogInLogOut\**" />
+    <None Remove="Views\RegisterLogInLogOut\**" />
+  </ItemGroup>
+
   
 
   <ItemGroup>
@@ -21,12 +28,6 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.2" />
-  </ItemGroup>
-
-  
-
-  <ItemGroup>
-    <Folder Include="Views\RegisterLogInLogOut\" />
   </ItemGroup>
 
 </Project>

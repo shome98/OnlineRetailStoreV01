@@ -21,6 +21,10 @@ namespace OnlineRetailStoreV01.Controllers
         {
             return View();
         }
+        public IActionResult LoginIndex()
+        {
+            return View();
+        }
 
         [AllowAnonymous]
         [HttpPost("register")]
@@ -36,19 +40,21 @@ namespace OnlineRetailStoreV01.Controllers
                 return BadRequest(new { message = "Failed to register user" });
 
             //return Ok(new { message = "User registered successfully" });
+            return Redirect("Admin/Index");
             return RedirectToAction("Index", "Admin");
         }
 
 
         [AllowAnonymous]
         [HttpPost("login")]
-        public async Task<IActionResult> LoginAsync(string email, string password)
+        public async Task<IActionResult> LoginAsync(string email,string passwword)
         {
-            var isAuthenticated = _userService.Authenticate(email, password);
+            var isAuthenticated = _userService.Authenticate(email, passwword);
 
             if (!Convert.ToBoolean(isAuthenticated))
                 return Unauthorized();
 
+            
             // Get the user object based on email
             var user = await _userService.GetUserByEmailAsync(email);
 
@@ -58,10 +64,10 @@ namespace OnlineRetailStoreV01.Controllers
             switch (user.UserType)
             {
                 case UserType.Admin:
-                    redirectTo = "/admin/dashboard";
+                    return RedirectToAction("Index", "Admin");
                     break;
                 case UserType.Vendor:
-                    redirectTo = "/vendor/dashboard";
+                    return RedirectToAction("Index", "Vendor");
                     break;
                 case UserType.Courier:
                     redirectTo = "/courier/dashboard";

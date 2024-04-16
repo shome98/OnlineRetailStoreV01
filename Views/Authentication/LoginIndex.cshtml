@@ -1,0 +1,57 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+
+@model OnlineRetailStoreV01.Models.User
+
+@{
+    ViewData["Title"] = "LoginIndex";
+}
+
+@* <div class="container">
+    <div class="row justify-content-center align-items-center">
+        <div class="col-md-6">
+            <h1 class="text-center mb-4">User Registration</h1>
+            <form  asp-controller="Authet" asp-action="LoginAsync" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <div class="form-group mb-3" style="user-select: auto;">
+                    <label asp-for="Email" class="control-label" style="user-select: auto;"></label>
+                    <input asp-for="Email" class="form-control" style="user-select: auto;" />
+                    <small id="emailHelp" class="form-text text-muted" style="user-select: auto;">We'll never share your email with anyone else.</small>
+                    <span asp-validation-for="Email" class="text-danger" style="user-select: auto;"></span>
+                </div>
+                <div class="form-group mb-3" style="user-select: auto;">
+                    <label asp-for="Password" class="control-label" style="user-select: auto;"></label>
+                    <input asp-for="Password" class="form-control" style="user-select: auto;" />
+                    <span asp-validation-for="Password" class="text-danger" style="user-select: auto;"></span>
+                </div>
+                <div class="form-group mb-3 text-center" style="user-select: auto;">
+                    <button type="submit" class="btn btn-primary me-2" style="user-select: auto;">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div> *@
+<h2>@ViewData["Title"]</h2>
+
+<form asp-action="LoginAsync" method="post">
+    <div class="form-group">
+        <label asp-for="Email">Email</label>
+        <input asp-for="Email" class="form-control" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Password">Password</label>
+        <input asp-for="Password" type="password" class="form-control" />
+        <span asp-validation-for="Password" class="text-danger"></span>
+    </div>
+    <button type="submit" class="btn btn-primary">Login</button>
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
