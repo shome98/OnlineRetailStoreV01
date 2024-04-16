@@ -47,24 +47,25 @@ namespace OnlineRetailStoreV01.Controllers
 
         [AllowAnonymous]
         [HttpPost("login")]
-        public async Task<IActionResult> LoginAsync(string email,string passwword)
+        public async Task<IActionResult> Login(string email,string passwword)
         {
-            var isAuthenticated = await _userService.Authenticate(email, passwword);
+            var isAuthenticated =  _userService.Authenticate(email, passwword);
 
-            if (!Convert.ToBoolean(isAuthenticated))
+            if (isAuthenticated.Result)
                 return Unauthorized();
 
             
             // Get the user object based on email
             var user = await _userService.GetUserByEmailAsync(email);
 
-            var token = GenerateJwtToken(user.UserId, user.UserType.ToString());
+            //var token = GenerateJwtToken(user.UserId, user.UserType.ToString());
 
             string redirectTo = "";
             switch (user.UserType)
             {
                 case UserType.Admin:
-                    return RedirectToAction("Index", "Admin");
+                    return Redirect("Admin/Index");
+                    return Ok(new { message="this is admin"});
                     break;
                 case UserType.Vendor:
                     return RedirectToAction("Index", "Vendor");
